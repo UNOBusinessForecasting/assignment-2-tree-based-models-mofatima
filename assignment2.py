@@ -1,7 +1,6 @@
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import LabelEncoder
-import joblib
 
 # Load training data
 train_url = "https://github.com/dustywhite7/Econ8310/raw/master/AssignmentData/assignment3.csv"
@@ -16,6 +15,7 @@ train_data['meal'] = train_data['meal'].astype(int)
 
 # --- Changes start here ---
 # Convert 'DateTime' to numerical features
+# Extract features from DateTime
 for df in [train_data, test_data]:
     df['DateTime'] = pd.to_datetime(df['DateTime'])  # Convert to datetime objects
     df['Year'] = df['DateTime'].dt.year
@@ -30,7 +30,10 @@ X_train = train_data.drop(['meal', 'id', 'DateTime'], axis=1)  # Dropping 'id' a
 y_train = train_data['meal']
 
 # The test data should have the same structure, minus the 'meal' column
-X_test = test_data.drop(['id', 'DateTime', 'meal'], axis=1, errors='ignore')  # Dropping 'id', 'DateTime', and 'meal' (if it exists)
+# --- The fix: Explicitly drop 'meal' from X_test ---
+X_test = test_data.drop(['id', 'DateTime', 'meal'], axis=1)  # Dropping 'id', 'DateTime', and 'meal' columns from test data
+# --- End of fix ---
+
 
 # Initialize the model
 model = DecisionTreeClassifier()
@@ -41,6 +44,9 @@ modelFit = model.fit(X_train, y_train)
 # Generate predictions
 pred = modelFit.predict(X_test)
 
-# Save the model
-joblib.dump(modelFit, 'modelFit.pkl')
+# Convert predictions to binary if needed
+pred = [1 if p > 0.5 else 0 for p in pred]  # If you want hard classification
+import joblib
 
+# Save the model
+joblib.dump(modelFit, 'modelFit.pkl')
